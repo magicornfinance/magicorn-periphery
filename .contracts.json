@@ -1,0 +1,14 @@
+{
+  "bsc": {
+    "router": ""
+  },
+  "mainnet": {
+    "router": ""
+  },
+  "polygon": {
+    "router": ""
+  },
+  "avax": {
+    "router": ""
+  }
+}
