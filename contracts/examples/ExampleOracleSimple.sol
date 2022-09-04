@@ -1,11 +1,11 @@
 pragma solidity =0.6.6;
 
-import '@swapr/core/contracts/interfaces/IDXswapFactory.sol';
-import '@swapr/core/contracts/interfaces/IDXswapPair.sol';
+import '@magicorn/core/contracts/interfaces/IMagicornSwapFactory.sol';
+import '@magicorn/core/contracts/interfaces/IMagicornSwapPair.sol';
 
 import '../libraries/FixedPoint.sol';
-import '../libraries/DXswapOracleLibrary.sol';
-import '../libraries/DXswapLibrary.sol';
+import '../libraries/MagicornSwapOracleLibrary.sol';
+import '../libraries/MagicornSwapLibrary.sol';
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -14,7 +14,7 @@ contract ExampleOracleSimple {
 
     uint public constant PERIOD = 24 hours;
 
-    IDXswapPair immutable pair;
+    IMagicornSwapPair immutable pair;
     address public immutable token0;
     address public immutable token1;
 
@@ -25,7 +25,7 @@ contract ExampleOracleSimple {
     FixedPoint.uq112x112 public price1Average;
 
     constructor(address factory, address tokenA, address tokenB) public {
-        IDXswapPair _pair = IDXswapPair(DXswapLibrary.pairFor(factory, tokenA, tokenB));
+        IMagicornSwapPair _pair = IMagicornSwapPair(MagicornSwapLibrary.pairFor(factory, tokenA, tokenB));
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
@@ -39,7 +39,7 @@ contract ExampleOracleSimple {
 
     function update() external {
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
-            DXswapOracleLibrary.currentCumulativePrices(address(pair));
+            MagicornSwapOracleLibrary.currentCumulativePrices(address(pair));
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
 
         // ensure that at least one full period has passed since the last update

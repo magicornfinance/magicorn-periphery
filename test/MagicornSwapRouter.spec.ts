@@ -6,9 +6,9 @@ import { solidity, MockProvider, createFixtureLoader, deployContract } from 'eth
 import { ecsign } from 'ethereumjs-util'
 
 import { expandTo18Decimals, getApprovalDigest, mineBlock, MINIMUM_LIQUIDITY } from './shared/utilities'
-import { dxswapFixture } from './shared/fixtures'
+import { magicornswapFixture } from './shared/fixtures'
 
-import IDXswapPair from '@swapr/core/build/IDXswapPair.json'
+import IMagicornSwapPair from '@magicorn/core/build/IMagicornSwapPair.json'
 import DeflatingERC20 from '../build/DeflatingERC20.json'
 
 chai.use(solidity)
@@ -17,7 +17,7 @@ const overrides = {
   gasLimit: 9999999
 }
 
-describe('DXswapRouter', () => {
+describe('MagicornSwapRouter', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
@@ -36,12 +36,12 @@ describe('DXswapRouter', () => {
   let WETHPair: Contract
   let routerEventEmitter: Contract
   beforeEach(async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
     token0 = fixture.token0
     token1 = fixture.token1
     WETH = fixture.WETH
     WETHPartner = fixture.WETHPartner
-    factory = fixture.dxswapFactory
+    factory = fixture.magicornswapFactory
     router = fixture.router
     pair = fixture.pair
     WETHPair = fixture.WETHPair
@@ -711,13 +711,13 @@ describe('DXswapRouter', () => {
     expect(await router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(200))).to.eq(bigNumberify(2))
     expect(await router.quote(bigNumberify(2), bigNumberify(200), bigNumberify(100))).to.eq(bigNumberify(1))
     await expect(router.quote(bigNumberify(0), bigNumberify(100), bigNumberify(200))).to.be.revertedWith(
-      'DXswapLibrary: INSUFFICIENT_AMOUNT'
+      'MagicornSwapLibrary: INSUFFICIENT_AMOUNT'
     )
     await expect(router.quote(bigNumberify(1), bigNumberify(0), bigNumberify(200))).to.be.revertedWith(
-      'DXswapLibrary: INSUFFICIENT_LIQUIDITY'
+      'MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY'
     )
     await expect(router.quote(bigNumberify(1), bigNumberify(100), bigNumberify(0))).to.be.revertedWith(
-      'DXswapLibrary: INSUFFICIENT_LIQUIDITY'
+      'MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY'
     )
   })
 
@@ -727,13 +727,13 @@ describe('DXswapRouter', () => {
     )
     await expect(
       router.getAmountOut(bigNumberify(0), bigNumberify(100), bigNumberify(100), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_INPUT_AMOUNT')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_INPUT_AMOUNT')
     await expect(
       router.getAmountOut(bigNumberify(2), bigNumberify(0), bigNumberify(100), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_LIQUIDITY')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY')
     await expect(
       router.getAmountOut(bigNumberify(2), bigNumberify(100), bigNumberify(0), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_LIQUIDITY')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY')
   })
 
   it('getAmountIn', async () => {
@@ -742,13 +742,13 @@ describe('DXswapRouter', () => {
     )
     await expect(
       router.getAmountIn(bigNumberify(0), bigNumberify(100), bigNumberify(100), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_OUTPUT_AMOUNT')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_OUTPUT_AMOUNT')
     await expect(
       router.getAmountIn(bigNumberify(1), bigNumberify(0), bigNumberify(100), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_LIQUIDITY')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY')
     await expect(
       router.getAmountIn(bigNumberify(1), bigNumberify(100), bigNumberify(0), bigNumberify(30))
-    ).to.be.revertedWith('DXswapLibrary: INSUFFICIENT_LIQUIDITY')
+    ).to.be.revertedWith('MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY')
   })
 
   it('getAmountsOut', async () => {
@@ -767,7 +767,7 @@ describe('DXswapRouter', () => {
     )
 
     await expect(router.getAmountsOut(bigNumberify(2), [token0.address])).to.be.revertedWith(
-      'DXswapLibrary: INVALID_PATH'
+      'MagicornSwapLibrary: INVALID_PATH'
     )
     const path = [token0.address, token1.address]
     expect(await router.getAmountsOut(bigNumberify(2), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
@@ -789,7 +789,7 @@ describe('DXswapRouter', () => {
     )
 
     await expect(router.getAmountsIn(bigNumberify(1), [token0.address])).to.be.revertedWith(
-      'DXswapLibrary: INVALID_PATH'
+      'MagicornSwapLibrary: INVALID_PATH'
     )
     const path = [token0.address, token1.address]
     expect(await router.getAmountsIn(bigNumberify(1), path)).to.deep.eq([bigNumberify(2), bigNumberify(1)])
@@ -810,7 +810,7 @@ describe('fee-on-transfer tokens', () => {
   let router: Contract
   let pair: Contract
   beforeEach(async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
 
     WETH = fixture.WETH
     router = fixture.router
@@ -818,9 +818,9 @@ describe('fee-on-transfer tokens', () => {
     DTT = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await fixture.dxswapFactory.createPair(DTT.address, WETH.address)
-    const pairAddress = await fixture.dxswapFactory.getPair(DTT.address, WETH.address)
-    pair = new Contract(pairAddress, JSON.stringify(IDXswapPair.abi), provider).connect(wallet)
+    await fixture.magicornswapFactory.createPair(DTT.address, WETH.address)
+    const pairAddress = await fixture.magicornswapFactory.getPair(DTT.address, WETH.address)
+    pair = new Contract(pairAddress, JSON.stringify(IMagicornSwapPair.abi), provider).connect(wallet)
   })
 
   afterEach(async function() {
@@ -996,7 +996,7 @@ describe('fee-on-transfer tokens: reloaded', () => {
   let DTT2: Contract
   let router: Contract
   beforeEach(async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
 
     router = fixture.router
 
@@ -1004,8 +1004,8 @@ describe('fee-on-transfer tokens: reloaded', () => {
     DTT2 = await deployContract(wallet, DeflatingERC20, [expandTo18Decimals(10000)])
 
     // make a DTT<>WETH pair
-    await fixture.dxswapFactory.createPair(DTT.address, DTT2.address)
-    const pairAddress = await fixture.dxswapFactory.getPair(DTT.address, DTT2.address)
+    await fixture.magicornswapFactory.createPair(DTT.address, DTT2.address)
+    const pairAddress = await fixture.magicornswapFactory.getPair(DTT.address, DTT2.address)
   })
 
   afterEach(async function() {

@@ -21,7 +21,7 @@
     ".contracts.json"
   ],
   "dependencies": {
-    "@swapr/core": "^0.3.17"
+    "@magicorn/core": "^0.2.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.6",

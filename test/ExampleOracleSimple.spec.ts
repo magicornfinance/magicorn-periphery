@@ -4,7 +4,7 @@ import { BigNumber } from 'ethers/utils'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals, mineBlock, encodePrice } from './shared/utilities'
-import { dxswapFixture } from './shared/fixtures'
+import { magicornswapFixture } from './shared/fixtures'
 
 import ExampleOracleSimple from '../build/ExampleOracleSimple.json'
 
@@ -38,7 +38,7 @@ describe('ExampleOracleSimple', () => {
   }
 
   beforeEach(async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
 
     token0 = fixture.token0
     token1 = fixture.token1
@@ -47,7 +47,7 @@ describe('ExampleOracleSimple', () => {
     exampleOracleSimple = await deployContract(
       wallet,
       ExampleOracleSimple,
-      [fixture.dxswapFactory.address, token0.address, token1.address],
+      [fixture.magicornswapFactory.address, token0.address, token1.address],
       overrides
     )
   })

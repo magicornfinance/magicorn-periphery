@@ -1,17 +1,17 @@
 pragma solidity >=0.5.0;
 
-import '@swapr/core/contracts/interfaces/IDXswapPair.sol';
+import '@magicorn/core/contracts/interfaces/IMagicornSwapPair.sol';
 
 import "./SafeMath.sol";
 
-library DXswapLibrary {
+library MagicornSwapLibrary {
     using SafeMath for uint;
 
     // returns sorted token addresses, used to handle return values from pairs sorted in this order
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
-        require(tokenA != tokenB, 'DXswapLibrary: IDENTICAL_ADDRESSES');
+        require(tokenA != tokenB, 'MagicornSwapLibrary: IDENTICAL_ADDRESSES');
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), 'DXswapLibrary: ZERO_ADDRESS');
+        require(token0 != address(0), 'MagicornSwapLibrary: ZERO_ADDRESS');
     }
 
     // calculates the CREATE2 address for a pair without making any external calls
@@ -28,27 +28,27 @@ library DXswapLibrary {
     // fetches and sorts the reserves for a pair
     function getReserves(address factory, address tokenA, address tokenB) internal view returns (uint reserveA, uint reserveB) {
         (address token0,) = sortTokens(tokenA, tokenB);
-        (uint reserve0, uint reserve1,) = IDXswapPair(pairFor(factory, tokenA, tokenB)).getReserves();
+        (uint reserve0, uint reserve1,) = IMagicornSwapPair(pairFor(factory, tokenA, tokenB)).getReserves();
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
     }
     
     // fetches and sorts the reserves for a pair
     function getSwapFee(address factory, address tokenA, address tokenB) internal view returns (uint swapFee) {
         (address token0,) = sortTokens(tokenA, tokenB);
-        swapFee = IDXswapPair(pairFor(factory, tokenA, tokenB)).swapFee();
+        swapFee = IMagicornSwapPair(pairFor(factory, tokenA, tokenB)).swapFee();
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
     function quote(uint amountA, uint reserveA, uint reserveB) internal pure returns (uint amountB) {
-        require(amountA > 0, 'DXswapLibrary: INSUFFICIENT_AMOUNT');
-        require(reserveA > 0 && reserveB > 0, 'DXswapLibrary: INSUFFICIENT_LIQUIDITY');
+        require(amountA > 0, 'MagicornSwapLibrary: INSUFFICIENT_AMOUNT');
+        require(reserveA > 0 && reserveB > 0, 'MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY');
         amountB = amountA.mul(reserveB) / reserveA;
     }
 
     // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut, uint swapFee) internal pure returns (uint amountOut) {
-        require(amountIn > 0, 'DXswapLibrary: INSUFFICIENT_INPUT_AMOUNT');
-        require(reserveIn > 0 && reserveOut > 0, 'DXswapLibrary: INSUFFICIENT_LIQUIDITY');
+        require(amountIn > 0, 'MagicornSwapLibrary: INSUFFICIENT_INPUT_AMOUNT');
+        require(reserveIn > 0 && reserveOut > 0, 'MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY');
         uint amountInWithFee = amountIn.mul(uint(10000).sub(swapFee));
         uint numerator = amountInWithFee.mul(reserveOut);
         uint denominator = reserveIn.mul(10000).add(amountInWithFee);
@@ -57,8 +57,8 @@ library DXswapLibrary {
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut, uint swapFee) internal pure returns (uint amountIn) {
-        require(amountOut > 0, 'DXswapLibrary: INSUFFICIENT_OUTPUT_AMOUNT');
-        require(reserveIn > 0 && reserveOut > 0, 'DXswapLibrary: INSUFFICIENT_LIQUIDITY');
+        require(amountOut > 0, 'MagicornSwapLibrary: INSUFFICIENT_OUTPUT_AMOUNT');
+        require(reserveIn > 0 && reserveOut > 0, 'MagicornSwapLibrary: INSUFFICIENT_LIQUIDITY');
         uint numerator = reserveIn.mul(amountOut).mul(10000);
         uint denominator = reserveOut.sub(amountOut).mul(uint(10000).sub(swapFee));
         amountIn = (numerator / denominator).add(1);
@@ -66,7 +66,7 @@ library DXswapLibrary {
 
     // performs chained getAmountOut calculations on any number of pairs
     function getAmountsOut(address factory, uint amountIn, address[] memory path) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, 'DXswapLibrary: INVALID_PATH');
+        require(path.length >= 2, 'MagicornSwapLibrary: INVALID_PATH');
         amounts = new uint[](path.length);
         amounts[0] = amountIn;
         for (uint i; i < path.length - 1; i++) {
@@ -77,7 +77,7 @@ library DXswapLibrary {
 
     // performs chained getAmountIn calculations on any number of pairs
     function getAmountsIn(address factory, uint amountOut, address[] memory path) internal view returns (uint[] memory amounts) {
-        require(path.length >= 2, 'DXswapLibrary: INVALID_PATH');
+        require(path.length >= 2, 'MagicornSwapLibrary: INVALID_PATH');
         amounts = new uint[](path.length);
         amounts[amounts.length - 1] = amountOut;
         for (uint i = path.length - 1; i > 0; i--) {

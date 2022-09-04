@@ -1,21 +1,21 @@
 pragma solidity =0.6.6;
 
-import '@swapr/core/contracts/interfaces/IDXswapPair.sol';
+import '@magicorn/core/contracts/interfaces/IMagicornSwapPair.sol';
 
 import '../libraries/Babylonian.sol';
 import '../libraries/TransferHelper.sol';
 import '../interfaces/IERC20.sol';
-import '../interfaces/IDXswapRouter.sol';
+import '../interfaces/IMagicornSwapRouter.sol';
 import '../libraries/SafeMath.sol';
-import '../libraries/DXswapLibrary.sol';
+import '../libraries/MagicornSwapLibrary.sol';
 
 contract ExampleSwapToPrice {
     using SafeMath for uint256;
 
-    IDXswapRouter public immutable router;
+    IMagicornSwapRouter public immutable router;
     address public immutable factory;
 
-    constructor(address factory_, IDXswapRouter router_) public {
+    constructor(address factory_, IMagicornSwapRouter router_) public {
         factory = factory_;
         router = router_;
     }
@@ -63,8 +63,8 @@ contract ExampleSwapToPrice {
         bool aToB;
         uint256 amountIn;
         {
-            (uint256 reserveA, uint256 reserveB) = DXswapLibrary.getReserves(factory, tokenA, tokenB);
-            uint256 swapFee = DXswapLibrary.getSwapFee(factory, tokenA, tokenB);
+            (uint256 reserveA, uint256 reserveB) = MagicornSwapLibrary.getReserves(factory, tokenA, tokenB);
+            uint256 swapFee = MagicornSwapLibrary.getSwapFee(factory, tokenA, tokenB);
             (aToB, amountIn) = computeProfitMaximizingTrade(
                 truePriceTokenA, truePriceTokenB,
                 reserveA, reserveB, swapFee

@@ -2,15 +2,15 @@ pragma solidity =0.6.6;
 pragma experimental ABIEncoderV2;
 
 import './OracleCreator.sol';
-import './../interfaces/IDXswapFactory.sol';
-import './../interfaces/IDXswapRouter.sol';
+import './../interfaces/IMagicornSwapFactory.sol';
+import './../interfaces/IMagicornSwapRouter.sol';
 import './../libraries/TransferHelper.sol';
 import './../interfaces/IERC20.sol';
 import './../interfaces/IWETH.sol';
 import './../libraries/SafeMath.sol';
-import './../libraries/DXswapLibrary.sol';
+import './../libraries/MagicornSwapLibrary.sol';
 
-contract DXswapRelayer {
+contract MagicornSwapRelayer {
     using SafeMath for uint256;
 
     event NewOrder(
@@ -52,8 +52,8 @@ contract DXswapRelayer {
     uint8 public immutable PROVISION = 1;
     uint8 public immutable REMOVAL = 2;
 
-    address public immutable dxSwapFactory;
-    address public immutable dxSwapRouter;
+    address public immutable magicornSwapFactory;
+    address public immutable magicornSwapRouter;
     address public immutable uniswapFactory;
     address public immutable uniswapRouter;
     address public immutable WETH;
@@ -65,16 +65,16 @@ contract DXswapRelayer {
 
     constructor(
         address payable _owner,
-        address _dxSwapFactory,
-        address _dxSwapRouter,
+        address _magicornSwapFactory,
+        address _magicornSwapRouter,
         address _uniswapFactory,
         address _uniswapRouter,
         address _WETH,
         OracleCreator _oracleCreater
     ) public {
         owner = _owner;
-        dxSwapFactory = _dxSwapFactory;
-        dxSwapRouter = _dxSwapRouter;
+        magicornSwapFactory = _magicornSwapFactory;
+        magicornSwapRouter = _magicornSwapRouter;
         uniswapFactory = _uniswapFactory;
         uniswapRouter = _uniswapRouter;
         WETH = _WETH;
@@ -93,21 +93,21 @@ contract DXswapRelayer {
         uint256 deadline,
         address factory
     ) external payable returns (uint256 orderIndex) {
-        require(factory == dxSwapFactory || factory == uniswapFactory, 'DXswapRelayer: INVALID_FACTORY');
-        require(msg.sender == owner, 'DXswapRelayer: CALLER_NOT_OWNER');
-        require(tokenA != tokenB, 'DXswapRelayer: INVALID_PAIR');
-        require(tokenA < tokenB, 'DXswapRelayer: INVALID_TOKEN_ORDER');
-        require(amountA > 0 && amountB > 0, 'DXswapRelayer: INVALID_TOKEN_AMOUNT');
-        require(priceTolerance <= PARTS_PER_MILLION, 'DXswapRelayer: INVALID_TOLERANCE');
-        require(block.timestamp <= deadline, 'DXswapRelayer: DEADLINE_REACHED');
-        require(maxWindowTime > 30, 'DXswapRelayer: INVALID_WINDOWTIME');
+        require(factory == magicornSwapFactory || factory == uniswapFactory, 'MagicornSwapRelayer: INVALID_FACTORY');
+        require(msg.sender == owner, 'MagicornSwapRelayer: CALLER_NOT_OWNER');
+        require(tokenA != tokenB, 'MagicornSwapRelayer: INVALID_PAIR');
+        require(tokenA < tokenB, 'MagicornSwapRelayer: INVALID_TOKEN_ORDER');
+        require(amountA > 0 && amountB > 0, 'MagicornSwapRelayer: INVALID_TOKEN_AMOUNT');
+        require(priceTolerance <= PARTS_PER_MILLION, 'MagicornSwapRelayer: INVALID_TOLERANCE');
+        require(block.timestamp <= deadline, 'MagicornSwapRelayer: DEADLINE_REACHED');
+        require(maxWindowTime > 30, 'MagicornSwapRelayer: INVALID_WINDOWTIME');
         
         if (tokenA == address(0)) {
-            require(address(this).balance >= amountA, 'DXswapRelayer: INSUFFICIENT_ETH');
+            require(address(this).balance >= amountA, 'MagicornSwapRelayer: INSUFFICIENT_ETH');
         } else {
-            require(IERC20(tokenA).balanceOf(address(this)) >= amountA, 'DXswapRelayer: INSUFFICIENT_TOKEN_A');
+            require(IERC20(tokenA).balanceOf(address(this)) >= amountA, 'MagicornSwapRelayer: INSUFFICIENT_TOKEN_A');
         }
-        require(IERC20(tokenB).balanceOf(address(this)) >= amountB, 'DXswapRelayer: INSUFFICIENT_TOKEN_B');
+        require(IERC20(tokenB).balanceOf(address(this)) >= amountB, 'MagicornSwapRelayer: INSUFFICIENT_TOKEN_B');
 
         address pair = _pair(tokenA, tokenB, factory);
         orderIndex = _OrderIndex();
@@ -130,7 +130,7 @@ contract DXswapRelayer {
         });
         emit NewOrder(orderIndex, PROVISION);
 
-        (uint reserveA, uint reserveB,) = IDXswapPair(pair).getReserves();
+        (uint reserveA, uint reserveB,) = IMagicornSwapPair(pair).getReserves();
         if (minReserveA == 0 && minReserveB == 0 && reserveA == 0 && reserveB == 0) {
             /* Non-circulating tokens can be provisioned immediately if reserve thresholds are set to zero */
             orders[orderIndex].executed = true;
@@ -156,14 +156,14 @@ contract DXswapRelayer {
         uint256 deadline,
         address factory
     ) external returns (uint256 orderIndex) {
-        require(factory == dxSwapFactory || factory == uniswapFactory, 'DXswapRelayer: INVALID_FACTORY');
-        require(msg.sender == owner, 'DXswapRelayer: CALLER_NOT_OWNER');
-        require(tokenA != tokenB, 'DXswapRelayer: INVALID_PAIR');
-        require(tokenA < tokenB, 'DXswapRelayer: INVALID_TOKEN_ORDER');
-        require(amountA > 0 && amountB > 0 && liquidity > 0, 'DXswapRelayer: INVALID_LIQUIDITY_AMOUNT');
-        require(priceTolerance <= PARTS_PER_MILLION, 'DXswapRelayer: INVALID_TOLERANCE');
-        require(block.timestamp <= deadline, 'DXswapRelayer: DEADLINE_REACHED');
-        require(maxWindowTime > 30, 'DXswapRelayer: INVALID_WINDOWTIME');
+        require(factory == magicornSwapFactory || factory == uniswapFactory, 'MagicornSwapRelayer: INVALID_FACTORY');
+        require(msg.sender == owner, 'MagicornSwapRelayer: CALLER_NOT_OWNER');
+        require(tokenA != tokenB, 'MagicornSwapRelayer: INVALID_PAIR');
+        require(tokenA < tokenB, 'MagicornSwapRelayer: INVALID_TOKEN_ORDER');
+        require(amountA > 0 && amountB > 0 && liquidity > 0, 'MagicornSwapRelayer: INVALID_LIQUIDITY_AMOUNT');
+        require(priceTolerance <= PARTS_PER_MILLION, 'MagicornSwapRelayer: INVALID_TOLERANCE');
+        require(block.timestamp <= deadline, 'MagicornSwapRelayer: DEADLINE_REACHED');
+        require(maxWindowTime > 30, 'MagicornSwapRelayer: INVALID_WINDOWTIME');
 
         address pair = _pair(tokenA, tokenB, factory);
         orderIndex = _OrderIndex();
@@ -186,8 +186,8 @@ contract DXswapRelayer {
         });
 
         tokenA = tokenA == address(0) ? WETH : tokenA;
-        address dxSwapPair = DXswapLibrary.pairFor(address(dxSwapFactory), tokenA, tokenB);
-        (uint reserveA, uint reserveB,) = IDXswapPair(dxSwapPair).getReserves();
+        address magicornSwapPair = MagicornSwapLibrary.pairFor(address(magicornSwapFactory), tokenA, tokenB);
+        (uint reserveA, uint reserveB,) = IMagicornSwapPair(magicornSwapPair).getReserves();
         uint256 windowTime = _consultOracleParameters(amountA, amountB, reserveA, reserveB, maxWindowTime);
         orders[orderIndex].oracleId = oracleCreator.createOracle(windowTime, pair);
         emit NewOrder(orderIndex, REMOVAL);
@@ -195,17 +195,17 @@ contract DXswapRelayer {
 
     function executeOrder(uint256 orderIndex) external {
         Order storage order = orders[orderIndex];
-        require(orderIndex < orderCount, 'DXswapRelayer: INVALID_ORDER');
-        require(!order.executed, 'DXswapRelayer: ORDER_EXECUTED');
-        require(oracleCreator.isOracleFinalized(order.oracleId) , 'DXswapRelayer: OBSERVATION_RUNNING');
-        require(block.timestamp <= order.deadline, 'DXswapRelayer: DEADLINE_REACHED');
+        require(orderIndex < orderCount, 'MagicornSwapRelayer: INVALID_ORDER');
+        require(!order.executed, 'MagicornSwapRelayer: ORDER_EXECUTED');
+        require(oracleCreator.isOracleFinalized(order.oracleId) , 'MagicornSwapRelayer: OBSERVATION_RUNNING');
+        require(block.timestamp <= order.deadline, 'MagicornSwapRelayer: DEADLINE_REACHED');
 
         address tokenA = order.tokenA;
         address tokenB = order.tokenB;
         uint256 amountB;
         amountB = oracleCreator.consult(
           order.oracleId,
-          tokenA == address(0) ? IDXswapRouter(dxSwapRouter).WETH() : tokenA,
+          tokenA == address(0) ? IMagicornSwapRouter(magicornSwapRouter).WETH() : tokenA,
           order.amountA 
         );
         uint256 amountA = oracleCreator.consult(order.oracleId, tokenB, order.amountB);
@@ -223,7 +223,7 @@ contract DXswapRelayer {
         if(order.action == PROVISION){
             _pool(tokenA, tokenB, amountA, amountB, minA, minB);
         } else if (order.action == REMOVAL){
-            address pair = _pair(tokenA, tokenB, dxSwapFactory);
+            address pair = _pair(tokenA, tokenB, magicornSwapFactory);
             _unpool(
               tokenA, 
               tokenB, 
@@ -239,14 +239,14 @@ contract DXswapRelayer {
     // Updates a price oracle and sends a bounty to msg.sender
     function updateOracle(uint256 orderIndex) external {
         Order storage order = orders[orderIndex];
-        require(block.timestamp <= order.deadline, 'DXswapRelayer: DEADLINE_REACHED');
-        require(!oracleCreator.isOracleFinalized(order.oracleId) , 'DXswapRelayer: OBSERVATION_ENDED');
+        require(block.timestamp <= order.deadline, 'MagicornSwapRelayer: DEADLINE_REACHED');
+        require(!oracleCreator.isOracleFinalized(order.oracleId) , 'MagicornSwapRelayer: OBSERVATION_ENDED');
         uint256 amountBounty = GAS_ORACLE_UPDATE.mul(tx.gasprice).add(BOUNTY);
         
-        (uint reserveA, uint reserveB,) = IDXswapPair(order.oraclePair).getReserves();
+        (uint reserveA, uint reserveB,) = IMagicornSwapPair(order.oraclePair).getReserves();
         require(
             reserveA >= order.minReserveA && reserveB >= order.minReserveB,
-            'DXswapRelayer: RESERVE_TO_LOW'
+            'MagicornSwapRelayer: RESERVE_TO_LOW'
         );
         oracleCreator.update(order.oracleId);
         if(address(this).balance >= amountBounty){
@@ -256,9 +256,9 @@ contract DXswapRelayer {
 
     function withdrawExpiredOrder(uint256 orderIndex) external {
         Order storage order = orders[orderIndex];
-        require(msg.sender == owner, 'DXswapRelayer: CALLER_NOT_OWNER');
-        require(block.timestamp > order.deadline, 'DXswapRelayer: DEADLINE_NOT_REACHED');
-        require(order.executed == false, 'DXswapRelayer: ORDER_EXECUTED');
+        require(msg.sender == owner, 'MagicornSwapRelayer: CALLER_NOT_OWNER');
+        require(block.timestamp > order.deadline, 'MagicornSwapRelayer: DEADLINE_NOT_REACHED');
+        require(order.executed == false, 'MagicornSwapRelayer: ORDER_EXECUTED');
         address tokenA = order.tokenA;
         address tokenB = order.tokenB;
         uint256 amountA = order.amountA;
@@ -289,9 +289,9 @@ contract DXswapRelayer {
           IWETH(WETH).deposit{value: _amountA}();
           _tokenA = WETH;
         }
-        TransferHelper.safeApprove(_tokenA, dxSwapRouter, _amountA);
-        TransferHelper.safeApprove(_tokenB, dxSwapRouter, _amountB);
-        (amountA, amountB, liquidity) = IDXswapRouter(dxSwapRouter).addLiquidity(
+        TransferHelper.safeApprove(_tokenA, magicornSwapRouter, _amountA);
+        TransferHelper.safeApprove(_tokenB, magicornSwapRouter, _amountB);
+        (amountA, amountB, liquidity) = IMagicornSwapRouter(magicornSwapRouter).addLiquidity(
             _tokenA,
             _tokenB,
             _amountA,
@@ -301,8 +301,8 @@ contract DXswapRelayer {
             address(this),
             block.timestamp
         );
-        TransferHelper.safeApprove(_tokenA, dxSwapRouter, 0);
-        TransferHelper.safeApprove(_tokenB, dxSwapRouter, 0);
+        TransferHelper.safeApprove(_tokenA, magicornSwapRouter, 0);
+        TransferHelper.safeApprove(_tokenB, magicornSwapRouter, 0);
     }
 
     function _unpool(
@@ -314,8 +314,8 @@ contract DXswapRelayer {
         uint256 _minB
     ) internal {
         _tokenA = _tokenA == address(0) ? WETH : _tokenA;
-        TransferHelper.safeApprove(_pair, dxSwapRouter, _liquidity);
-        (uint amountA, uint amountB) = IDXswapRouter(dxSwapRouter).removeLiquidity(
+        TransferHelper.safeApprove(_pair, magicornSwapRouter, _liquidity);
+        (uint amountA, uint amountB) = IMagicornSwapRouter(magicornSwapRouter).removeLiquidity(
             _tokenA,
             _tokenB,
             _liquidity,
@@ -324,7 +324,7 @@ contract DXswapRelayer {
             address(this),
             block.timestamp
         );
-        TransferHelper.safeApprove(_pair, dxSwapRouter, 0);
+        TransferHelper.safeApprove(_pair, magicornSwapRouter, 0);
         if(_tokenA == WETH){
           IWETH(WETH).withdraw(amountA);
         } else if (_tokenB == WETH){
@@ -360,11 +360,11 @@ contract DXswapRelayer {
         }
     }
 
-    // Internal function to return the correct pair address on either DXswap or Uniswap
+    // Internal function to return the correct pair address on either MagicornSwap or Uniswap
     function _pair(address tokenA, address tokenB, address factory) internal view returns (address pair) {
-      require(factory == dxSwapFactory || factory == uniswapFactory, 'DXswapRelayer: INVALID_FACTORY');
+      require(factory == magicornSwapFactory || factory == uniswapFactory, 'MagicornSwapRelayer: INVALID_FACTORY');
       if (tokenA == address(0)) tokenA = WETH;
-      pair = IDXswapFactory(factory).getPair(tokenA, tokenB);
+      pair = IMagicornSwapFactory(factory).getPair(tokenA, tokenB);
     }
 
     // Returns an OrderIndex that is used to reference liquidity orders
@@ -375,13 +375,13 @@ contract DXswapRelayer {
     
     // Allows the owner to withdraw any ERC20 from the relayer
     function ERC20Withdraw(address token, uint256 amount) external {
-        require(msg.sender == owner, 'DXswapRelayer: CALLER_NOT_OWNER');
+        require(msg.sender == owner, 'MagicornSwapRelayer: CALLER_NOT_OWNER');
         TransferHelper.safeTransfer(token, owner, amount);
     }
 
     // Allows the owner to withdraw any ETH amount from the relayer
     function ETHWithdraw(uint256 amount) external {
-        require(msg.sender == owner, 'DXswapRelayer: CALLER_NOT_OWNER');
+        require(msg.sender == owner, 'MagicornSwapRelayer: CALLER_NOT_OWNER');
         TransferHelper.safeTransferETH(owner, amount);
     }
 

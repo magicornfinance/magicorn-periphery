@@ -4,7 +4,7 @@ import { BigNumber, bigNumberify } from 'ethers/utils'
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals, mineBlock, encodePrice } from './shared/utilities'
-import { dxswapFixture } from './shared/fixtures'
+import { magicornswapFixture } from './shared/fixtures'
 
 import ExampleSlidingWindowOracle from '../build/ExampleSlidingWindowOracle.json'
 
@@ -56,13 +56,13 @@ describe('ExampleSlidingWindowOracle', () => {
   }
 
   beforeEach('deploy fixture', async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
 
     token0 = fixture.token0
     token1 = fixture.token1
     pair = fixture.pair
     weth = fixture.WETH
-    factory = fixture.dxswapFactory
+    factory = fixture.magicornswapFactory
   })
 
   // 1/1/2020 @ 12:00 am UTC

@@ -5,7 +5,7 @@ import { BigNumber, bigNumberify, defaultAbiCoder, formatEther } from 'ethers/ut
 import { solidity, MockProvider, createFixtureLoader, deployContract } from 'ethereum-waffle'
 
 import { expandTo18Decimals } from './shared/utilities'
-import { dxswapFixture } from './shared/fixtures'
+import { magicornswapFixture } from './shared/fixtures'
 
 import ExampleSwapToPrice from '../build/ExampleSwapToPrice.json'
 
@@ -30,7 +30,7 @@ describe('ExampleSwapToPrice', () => {
   let swapToPriceExample: Contract
   let router: Contract
   beforeEach(async function() {
-    const fixture = await loadFixture(dxswapFixture)
+    const fixture = await loadFixture(magicornswapFixture)
     token0 = fixture.token0
     token1 = fixture.token1
     pair = fixture.pair
@@ -38,7 +38,7 @@ describe('ExampleSwapToPrice', () => {
     swapToPriceExample = await deployContract(
       wallet,
       ExampleSwapToPrice,
-      [fixture.dxswapFactory.address, fixture.router.address],
+      [fixture.magicornswapFactory.address, fixture.router.address],
       overrides
     )
   })

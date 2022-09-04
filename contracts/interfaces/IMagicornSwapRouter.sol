@@ -1,7 +1,7 @@
 pragma solidity >=0.6.2;
 
 
-interface IDXswapRouter {
+interface IMagicornSwapRouter {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
 

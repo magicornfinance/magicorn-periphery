@@ -2,8 +2,8 @@ pragma solidity =0.6.6;
 pragma experimental ABIEncoderV2;
 
 import './../libraries/TransferHelper.sol';
-import './../libraries/DXswapOracleLibrary.sol';
-import './../libraries/DXswapLibrary.sol';
+import './../libraries/MagicornSwapOracleLibrary.sol';
+import './../libraries/MagicornSwapLibrary.sol';
 import './../libraries/SafeMath.sol';
 
 contract OracleCreator {
@@ -20,7 +20,7 @@ contract OracleCreator {
         uint256 windowTime;
         address token0;
         address token1;
-        IDXswapPair pair;
+        IMagicornSwapPair pair;
         uint32 blockTimestampLast;
         uint256 price0CumulativeLast;
         uint256 price1CumulativeLast;
@@ -37,7 +37,7 @@ contract OracleCreator {
         uint256 windowTime,
         address pair
     ) public returns (uint256 oracleId) {
-        IDXswapPair sourcePair = IDXswapPair(pair);
+        IMagicornSwapPair sourcePair = IMagicornSwapPair(pair);
         address token0 = sourcePair.token0();
         address token1 = sourcePair.token1();
         (,, uint32 blockTimestampLast) =  sourcePair.getReserves();
@@ -65,7 +65,7 @@ contract OracleCreator {
         require(msg.sender == oracle.owner, 'OracleCreator: CALLER_NOT_OWNER');
         require(oracle.observationsCount < 2, 'OracleCreator: FINISHED_OBERSERVATION');
         (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) =
-            DXswapOracleLibrary.currentCumulativePrices(address(oracle.pair));
+            MagicornSwapOracleLibrary.currentCumulativePrices(address(oracle.pair));
         uint32 timeElapsed = blockTimestamp - oracle.blockTimestampLast; // overflow is desired
 
         // first update can be executed immediately. Ensure that at least one full period has passed since the first update 

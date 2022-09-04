@@ -1,11 +1,11 @@
 pragma solidity >=0.5.0;
 
-import '@swapr/core/contracts/interfaces/IDXswapPair.sol';
+import '@magicorn/core/contracts/interfaces/IMagicornSwapPair.sol';
 
 import './FixedPoint.sol';
 
 // library with helper methods for oracles that are concerned with computing average prices
-library DXswapOracleLibrary {
+library MagicornSwapOracleLibrary {
     using FixedPoint for *;
 
     // helper function that returns the current block timestamp within the range of uint32, i.e. [0, 2**32 - 1]
@@ -18,11 +18,11 @@ library DXswapOracleLibrary {
         address pair
     ) internal view returns (uint price0Cumulative, uint price1Cumulative, uint32 blockTimestamp) {
         blockTimestamp = currentBlockTimestamp();
-        price0Cumulative = IDXswapPair(pair).price0CumulativeLast();
-        price1Cumulative = IDXswapPair(pair).price1CumulativeLast();
+        price0Cumulative = IMagicornSwapPair(pair).price0CumulativeLast();
+        price1Cumulative = IMagicornSwapPair(pair).price1CumulativeLast();
 
         // if time has elapsed since the last update on the pair, mock the accumulated price values
-        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IDXswapPair(pair).getReserves();
+        (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast) = IMagicornSwapPair(pair).getReserves();
         if (blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
             uint32 timeElapsed = blockTimestamp - blockTimestampLast;
